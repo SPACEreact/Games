@@ -143,10 +143,10 @@ export class GameLobby extends DurableObject {
         this.occupy(server,p,room,"X"); await this.save();this.publish(room);
       } else if (mode==="join") {
         const room=this.rooms.get(id);
-        if (!room) this.fail(server,"Room not found or expired.");
+        if (!room) {this.fail(server,"Room not found or expired.");this.people.delete(server);server.close(4004,"Room not found");}
         else {
           const seat=room.X?.token===token ? "X" : room.O?.token===token ? "O" : !room.O ? "O" : null;
-          if (!seat) this.fail(server,"This room already has two players.");
+          if (!seat) {this.fail(server,"This room already has two players.");this.people.delete(server);server.close(4009,"Room full");}
           else {
             if (!room[seat]) room[seat]={token,name};
             this.occupy(server,p,room,seat);await this.save();this.publish(room);
@@ -190,7 +190,7 @@ export class GameLobby extends DurableObject {
     const room=this.rooms.get(p.room);
     if (!room || room[p.seat]?.token!==p.token) return this.fail(ws,"The match has expired.");
     if (msg.type==="move") {
-      if (!room.O) return this.fail(ws,"Waiting for an opponent.");
+      if (!room.O || !this.activeSocket(room.id,"X") || !this.activeSocket(room.id,"O")) return this.fail(ws,"Waiting for both players to connect.");
       if (winner(room.board)) return this.fail(ws,"This game is finished.");
       if (room.turn!==p.seat) return this.fail(ws,"It's not your turn.");
       if (!Number.isInteger(msg.cell) || msg.cell<0 || msg.cell>8 || room.board[msg.cell]) return this.fail(ws,"Invalid move.");
