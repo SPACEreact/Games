@@ -1,6 +1,9 @@
+import { configured, onlineState, onOnlineChange, connectOnline, leaveOnline, onlineMove, onlineRematch, reconnectOnline } from "./online.js";
+import { onlineTicHtml, onlineLobbyHtml } from "./online-view.js";
+
 // GameAdda — dependency-free, client-side game playground.
 // To add a game, register it in GAMES and add its renderer/handler below.
-// Live stranger matchmaking is NOT included in this static release.
+// Real-time multiplayer requires deploying the Cloudflare Worker in /worker.
 
 const GAMES = [
   { id:"tic", title:"Tic-Tac-Toe", emoji:"⭕", tag:"CLASSIC", color:"lilac", description:"A tiny classic. Outsmart the board.", players:"Solo or local two-player" },
@@ -13,8 +16,9 @@ const e = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const read = (key) => { try { return localStorage.getItem(key) } catch { return null } };
 const save = (key, value) => { try { localStorage.setItem(key, value) } catch {} };
 let nick = read("gameadda-name") || "";
-let menuOpen = false, modalOpen = false;
-let active = new URLSearchParams(location.search).get("game");
+let menuOpen = false, modalOpen = false, pendingOnline = null;
+const incomingRoom = (new URLSearchParams(location.search).get("room") || "").toUpperCase();
+let active = incomingRoom ? "tic" : new URLSearchParams(location.search).get("game");
 if (!GAMES.some(g => g.id === active)) active = "";
 let view = active ? "game" : "home";
 let tic = { board:Array(9).fill(""), turn:"X", mode:"cpu", busy:false };
@@ -43,9 +47,18 @@ function stopTimers() {
   reaction.phase = reaction.phase === "wait" ? "idle" : reaction.phase;
 }
 function navigate(dest,id) {
-  stopTimers(); view=dest; active=dest==="game" ? id : "";
+  stopTimers();leaveOnline(true);pendingOnline=null;
+  view=dest;active=dest==="game" ? id : "";
+  if(dest==="game" && id==="tic")tic.mode="cpu";
   history.pushState({}, "", active ? "?game="+encodeURIComponent(active) : location.pathname);
-  menuOpen=false; render(); window.scrollTo({top:0,behavior:"instant"});
+  menuOpen=false;render();window.scrollTo({top:0,behavior:"instant"});
+}
+function beginOnlineGame(mode,room="") {
+  if (!nick){pendingOnline={mode,room};modalOpen=true;render();return}
+  stopTimers();tic.mode="online";view="game";active="tic";modalOpen=false;pendingOnline=null;
+  history.replaceState({}, "", mode==="join" ? "?room="+encodeURIComponent(room) : "?game=tic");
+  if(configured())connectOnline(mode,{code:room,name:nick});
+  render();window.scrollTo({top:0,behavior:"instant"});
 }
 function brand() {
   return `<button class="brand" data-action="home" aria-label="GameAdda home"><span class="brand-icon">🎮</span><span><span class="brand-title">game<span>adda</span></span><span class="brand-sub">TINY GAMES. BIG FUN.</span></span></button>`;
