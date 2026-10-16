@@ -2,25 +2,12 @@
 // Single lobby coordinator for small hobby traffic; no account or persistent player profiles.
 // All game state changes are server-authoritative. WebSockets use hibernation.
 import { DurableObject } from "cloudflare:workers";
+import { winner, cleanName, validCode } from "./rules.js";
 
 const ROOM_TTL = 2 * 60 * 60 * 1000;
 const IDLE_TTL = 30 * 60 * 1000;
 const MAX_SOCKETS = 300;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-
-export function winner(board) {
-  for (const [a,b,c] of wins) if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
-  return board.every(Boolean) ? "draw" : null;
-}
-export function cleanName(value) {
-  if (typeof value !== "string") return "Guest";
-  const name = value.replace(/[\u0000-\u001F\u007F<>]/g, "").replace(/\s+/g, " ").trim().slice(0,18);
-  return name || "Guest";
-}
-export function validCode(code) {
-  return typeof code === "string" && /^[A-HJ-NP-Z2-9]{8}$/.test(code);
-}
 function code() {
   const bytes = new Uint8Array(8); crypto.getRandomValues(bytes);
   return [...bytes].map(v=>CODE_CHARS[v % CODE_CHARS.length]).join("");
