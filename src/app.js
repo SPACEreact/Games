@@ -256,20 +256,45 @@ document.addEventListener("click",event=>{
   else if(action==="reaction")reactionTap();
 });
 document.addEventListener("submit",event=>{
+  if(event.target.id==="room-code-form"){
+    event.preventDefault();
+    const code=$("#room-code-input").value.trim().toUpperCase();
+    if(/^[A-HJ-NP-Z2-9]{8}$/.test(code))beginOnlineGame("join",code);
+    else alert("Enter a valid 8-character room code.");
+    return;
+  }
   if(event.target.id!=="nick-form")return;
   event.preventDefault();
   const input=$("#nickname-input"),clean=input.value.trim().replace(/\s+/g," ").slice(0,18);
   if(!clean)return;
-  nick=clean;save("gameadda-name",nick);modalOpen=false;render();
+  nick=clean;save("gameadda-name",nick);modalOpen=false;
+  const plan=pendingOnline;pendingOnline=null;
+  if(plan)beginOnlineGame(plan.mode,plan.room);else render();
 });
 document.addEventListener("input",event=>{
   if(event.target.id==="game-search")$("#game-grid").innerHTML=cardsHtml(event.target.value);
 });
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&modalOpen){modalOpen=false;render()}});
 window.addEventListener("popstate",()=>{
-  stopTimers();
-  const id=new URLSearchParams(location.search).get("game");
-  active=GAMES.some(g=>g.id===id)?id:"";
-  view=active?"game":"home";render();
+  stopTimers();leaveOnline(true);
+  const params=new URLSearchParams(location.search);
+  const room=(params.get("room")||"").toUpperCase(),id=room?"tic":params.get("game");
+  active=GAMES.some(g=>g.id===id)?id:"";view=active?"game":"home";
+  if(room){tic.mode="online";if(nick && configured())connectOnline("join",{code:room,name:nick});else if(!nick){pendingOnline={mode:"join",room};modalOpen=true}}
+  else if(active==="tic")tic.mode="cpu";
+  render();
 });
+onOnlineChange(()=>{
+  const state=onlineState();
+  if(state.snapshot?.room && view==="game" && active==="tic" && tic.mode==="online"){
+    const url=new URL(location.href);url.search="?room="+encodeURIComponent(state.snapshot.room);
+    history.replaceState({}, "", url);
+  }
+  render();
+});
+if(incomingRoom && /^[A-HJ-NP-Z2-9]{8}$/.test(incomingRoom)) {
+  tic.mode="online";
+  if(nick && configured())connectOnline("join",{code:incomingRoom,name:nick});
+  else if(!nick){pendingOnline={mode:"join",room:incomingRoom};modalOpen=true}
+}
 render();
