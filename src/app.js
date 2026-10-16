@@ -135,7 +135,7 @@ function memoryHtml() {
 }
 function reactionHtml() {
   const text={idle:["👆","Tap to start","Wait for green. Then tap as fast as you can."],wait:["🟡","Wait for green…","Get ready. Don't tap early!"],go:["🟢","TAP NOW!","Go go go!"],early:["😅","Too early!","False start. Tap to try again."],done:["⚡",reaction.last+" ms","Tap to try again."]}[reaction.phase];
-  return `<div class="reaction-wrap"><button class="reaction-pad ${reaction.phase}" data-action="reaction"><span class="reaction-emoji">${text[0]}</span><strong>${text[1]}</strong><small>${text[2]}</small></button><div class="reaction-metrics"><div><small>LAST RESULT</small><b>${reaction.last===null?'—':reaction.last+' ms'}</b></div><div><small>PERSONAL BEST</small><b>${reaction.best===null?'—':reaction.best+' ms'}</b></div></div></div>`;
+  return `<p><a class="primary" href="./src/multiplayer.html?game=reaction">⚡ Play online with a friend ↗</a></p><div class="reaction-wrap"><button class="reaction-pad ${reaction.phase}" data-action="reaction"><span class="reaction-emoji">${text[0]}</span><strong>${text[1]}</strong><small>${text[2]}</small></button><div class="reaction-metrics"><div><small>LAST RESULT</small><b>${reaction.last===null?'—':reaction.last+' ms'}</b></div><div><small>PERSONAL BEST</small><b>${reaction.best===null?'—':reaction.best+' ms'}</b></div></div></div>`;
 }
 function gamePage() {
   const game=gameById(active);
