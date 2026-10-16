@@ -1,0 +1,50 @@
+name: Test and deploy multiplayer server
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+      - '.github/workflows/multiplayer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify multiplayer rules
+        working-directory: worker
+        run: npm test
+      - name: Check JavaScript syntax
+        run: |
+          node --check worker/src/worker.js
+          node --check worker/src/rules.js
+          node --check src/app.js
+          node --check src/online.js
+          node --check src/online-view.js
+
+  deploy:
+    needs: test
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.GAMEADDA_WORKER_DEPLOY == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Wrangler CLI
+        working-directory: worker
+        run: npm install
+      - name: Deploy Cloudflare Worker
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
