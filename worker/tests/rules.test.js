@@ -20,7 +20,7 @@ test("nickname is untrusted display text", () => {
 test("room codes have the expected alphabet and length", () => {
   assert.equal(validCode("ABCDEFGH"),true);
   assert.equal(validCode("23456789"),true);
-  assert.equal(validCode("TOOSHORT"),true);
+  assert.equal(validCode("FASTGAME"),true);
   assert.equal(validCode("ABC123"),false);
   assert.equal(validCode("11111111"),false);
   assert.equal(validCode("ABCD?FGH"),false);
