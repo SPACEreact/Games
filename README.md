@@ -1,63 +1,68 @@
-# 🎮 GameAdda — tiny games, big fun.
+# 🎮 GameAdda — tiny games. big fun.
 
-A lightweight, dependency-free collection of mini-games made to live on the web for years. No login, no downloads, and no paid build pipeline.
+A lightweight, no-login browser gaming playground. The website is hosted as static files, and an optional Cloudflare Worker handles live two-player games.
 
-## Included games
-- **Tic-Tac-Toe:** computer or two players using one device.
-- **Rock Paper Scissors:** single-player vs computer.
-- **Memory Flip:** card-matching challenge.
-- **Reaction Test:** reaction-time challenge with a personal best on this device.
+## Games
 
-## What works
-- Mobile-responsive homepage and game catalogue.
-- Optional guest nickname stored in your own browser.
-- Shareable URLs (for example: `?game=tic`).
-- Games work completely client-side, with no external API or subscription.
-- A GitHub Actions workflow for deployment.
+| Game | Solo | Same-device multiplayer | Real-time online |
+| --- | --- | --- | --- |
+| Tic-Tac-Toe | ✅ vs computer | ✅ | ✅ when Cloudflare Worker is deployed |
+| Rock Paper Scissors | ✅ | — | — |
+| Memory Flip | ✅ | — | — |
+| Reaction Test | ✅ | — | — |
 
-**Live multiplayer and public matchmaking are not yet connected.** Shareable links open a game's page, not a shared online match. The Public Rooms page makes this clear.
+## Main features
 
-## Host for free on GitHub Pages
+- No accounts, email addresses or passwords
+- Mobile-friendly game catalogue and temporary nicknames
+- Shareable game links
+- Online Tic-Tac-Toe private rooms with invite links
+- Stranger matchmaking for online Tic-Tac-Toe
+- Validated moves, rematches and reconnect support
+- Original four games remain playable without any backend
 
-The repository includes `.github/workflows/deploy.yml`. To enable it once:
+## Live site
 
-1. Open **Settings → Pages** for this repository.
-2. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Open **Actions → Deploy GameAdda to GitHub Pages** and run the workflow if it did not deploy automatically.
+GitHub Pages URL **after Pages is enabled**: https://spacereact.github.io/Games/
 
-Once GitHub Pages is enabled and deployment succeeds, the site should be available at:
+To enable Pages: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow `.github/workflows/deploy.yml` publishes the static site on pushes to `main`.
 
-https://spacereact.github.io/Games/
+## Important: online multiplayer requires a one-time deploy
 
-The repository is public and GitHub Pages is free for public repositories.
+The multiplayer backend code is committed under `worker/`, but adding it to GitHub does **not** deploy the Cloudflare Worker or connect players.
 
-## Add a new game
+Follow **[MULTIPLAYER_SETUP.md](MULTIPLAYER_SETUP.md)** to:
 
-Edit `src/app.js`:
-1. Add its metadata to `GAMES`.
-2. Add its renderer and interaction handler.
-3. Connect it in `gamePage()` and the click dispatcher.
+1. Deploy the Worker to your Cloudflare account.
+2. Copy the actual `workers.dev` URL.
+3. Set it in `src/online-config.js` and commit.
+4. Test with two phones.
 
-For long-term growth, consider moving each game's renderer into its own `src/games/<id>.js` module when the catalogue becomes larger.
+Until step 3 is complete, the website visibly explains that online multiplayer is not yet connected.
 
-## Test locally
+## Build and run the static website
 
-No Node.js or dependencies needed. Serve this repository with any local static server:
+No Node dependencies are needed for the frontend.
 
 ```bash
+git clone https://github.com/SPACEreact/Games.git
+cd Games
 python3 -m http.server 8000
 ```
 
-Open http://localhost:8000/Games/ if serving from the parent folder, or http://localhost:8000/ when inside the repository.
+Open http://localhost:8000/
 
-## Ten-year sustainability
+## Developer checks
 
-- Keep the domain and repo owned by you; enable two-factor authentication.
-- GitHub Pages only hosts static games. Real stranger-to-stranger multiplayer will require a synchronized server or hosted backend.
-- Review this repository, dependencies (if any), your domain renewal, and service limits periodically.
-- Before adding Google AdSense, publish a complete privacy policy and meet its approval and content requirements.
-- Don't commit API secrets into this repository.
+Run multiplayer rule tests from the `worker` folder:
 
-## License
+```bash
+cd worker
+npm test
+```
 
-Original site code is released as part of this repository. Third-party brand names and graphics retain their respective rights.
+## Long-term maintenance
+
+Keep the GitHub repository, your domain registrar, and your Cloudflare account under your control. Enable 2FA, keep backups, monitor Cloudflare free-tier usage, and review security and privacy requirements before adding Google AdSense.
+
+**No hosting setup is guaranteed to run untouched for ten years.** This design minimizes infrastructure and moving parts, but occasional checks are important.
