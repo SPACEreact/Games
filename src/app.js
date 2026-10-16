@@ -111,7 +111,7 @@ function ticHtml() {
     <div class="ttt-grid">${tic.board.map((cell,i)=>`<button data-cell="${i}" class="ttt-cell ${cell==='O'?'o':''}" ${cell||winner(tic.board)||tic.busy?'disabled':''} aria-label="Square ${i+1}">${cell==='X'?'×':cell==='O'?'○':''}</button>`).join("")}</div>
     <div class="ttt-status" role="status">${currentStatus()}</div>
     <div class="panel-actions"><button class="secondary" data-action="ttt-reset">↺ Reset board</button><button class="primary" data-action="ttt-reset">Play again ↗</button></div></section>
-    <aside><div class="side-box"><h3>⚔ Game mode</h3><button class="mode-button ${tic.mode==='cpu'?'current':''}" data-mode="cpu"><span class="mode-icon">🤖</span><span><b>Vs computer</b><small>Play a solo round</small></span></button><button class="mode-button ${tic.mode==='local'?'current':''}" data-mode="local"><span class="mode-icon">👥</span><span><b>Two players</b><small>Pass and play on one device</small></span></button></div>
+    <aside><div class="side-box"><h3>⚔ Game mode</h3><button class="mode-button ${tic.mode==='cpu'?'current':''}" data-mode="cpu"><span class="mode-icon">🤖</span><span><b>Vs computer</b><small>Play a solo round</small></span></button><button class="mode-button ${tic.mode==='local'?'current':''}" data-mode="local"><span class="mode-icon">👥</span><span><b>Two players</b><small>Pass and play on one device</small></span></button><button class="mode-button" data-online-action="random"><span class="mode-icon">🌍</span><span><b>Online stranger</b><small>Get matched automatically</small></span></button><button class="mode-button" data-online-action="create"><span class="mode-icon">🔗</span><span><b>Private online room</b><small>Invite a friend by link</small></span></button></div>
     <div class="tip"><b>💡 Little tip</b><p>Take the middle square early. It opens the most ways to make a line.</p></div></aside></div>`;
 }
 function rpsHtml() {
@@ -139,18 +139,14 @@ function reactionHtml() {
 }
 function gamePage() {
   const game=gameById(active);
-  const content=game.id==="tic"?ticHtml():game.id==="rps"?rpsHtml():game.id==="memory"?memoryHtml():reactionHtml();
+  const content=game.id==="tic"?(tic.mode==="online"?onlineTicHtml():ticHtml()):game.id==="rps"?rpsHtml():game.id==="memory"?memoryHtml():reactionHtml();
   return `<main class="inner"><button class="back" data-action="home">← All games</button><div class="page-heading"><div><div class="eyebrow">NOW PLAYING</div><h1>${game.emoji} ${game.title}</h1><p>${game.description}</p></div><button class="secondary" data-action="share">↗ Share game link</button></div>
-    ${content}<div class="notice"><span>🛡️</span><span><strong>First release:</strong> these games run in your browser. Sharing a game link opens the same game for a friend; it does not connect your two devices. Live rooms and stranger matchmaking will be added in a future update.</span></div></main>`;
+    ${content}<div class="notice"><span>🛡️</span><span><strong>First release:</strong> these games run in your browser. Sharing solo games opens the same game on another phone. For live play across devices, choose Online and deploy the Cloudflare backend.</span></div></main>`;
 }
-function roomsPage() {
-  return `<main class="inner"><div class="eyebrow">THE SOCIAL SIDE</div><h1>Public rooms<span class="period">.</span></h1><p class="page-sub">Quick games with other people, without accounts or passwords.</p>
-  <section class="empty-lobby"><div class="big-icon">👥</div><h2>The lobby is warming up.</h2><p>Public matchmaking is not connected in this version yet. Our four solo and local games are ready right now.</p><button class="primary" data-action="home">Explore games ↗</button></section>
-  <div class="notice">🛡️ Guest nicknames are stored in your browser only. We don't ask for an email or password.</div></main>`;
-}
+function roomsPage() { return onlineLobbyHtml(); }
 function aboutPage() {
   return `<main class="inner"><div class="eyebrow">SIMPLE BY DESIGN</div><h1>How GameAdda works<span class="period">.</span></h1><p class="page-sub">Open the site. Pick a game. Have a little fun. That's it.</p>
-  <div class="how-grid"><article class="how-card"><span>01</span><h3>Pick a nickname</h3><p>Choose any display name. No email, password, or profile is required.</p></article><article class="how-card"><span>02</span><h3>Find a tiny game</h3><p>Easy to learn, quick to finish, and fun to replay.</p></article><article class="how-card"><span>03</span><h3>Share a link</h3><p>Send a direct link to your favourite game. Real-time rooms are planned for later.</p></article></div>
+  <div class="how-grid"><article class="how-card"><span>01</span><h3>Pick a nickname</h3><p>Choose any display name. No email, password, or profile is required.</p></article><article class="how-card"><span>02</span><h3>Find a tiny game</h3><p>Easy to learn, quick to finish, and fun to replay.</p></article><article class="how-card"><span>03</span><h3>Share a link</h3><p>Send a direct link to your favourite game. Real-time rooms work after the Cloudflare Worker is deployed.</p></article></div>
   <div class="notice"><span>🔒</span><span><strong>Privacy:</strong> This version keeps your nickname and Reaction Test personal best in your device's local storage. It doesn't have accounts, analytics, advertising, chat, or a server database. If ads or analytics are added later, the privacy information will be updated before launch.</span></div></main>`;
 }
 function dialog() {
@@ -220,7 +216,7 @@ function reactionTap(){
   render();
 }
 async function shareGame() {
-  const g=gameById(active),url=new URL(location.href);url.search="?game="+encodeURIComponent(g.id);
+  const g=gameById(active),url=new URL(location.href);url.search=active==="tic" && tic.mode==="online" && onlineState().snapshot?.room ? "?room="+encodeURIComponent(onlineState().snapshot.room) : "?game="+encodeURIComponent(g.id);
   try {
     if(navigator.share){await navigator.share({title:"Play "+g.title+" on GameAdda",url:url.toString()});return}
     if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url.toString());alert("Game link copied!");return}
