@@ -1,0 +1,47 @@
+name: Deploy GameAdda to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: gameadda-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Prepare website
+        run: |
+          mkdir -p public-site
+          cp index.html public-site/index.html
+          cp -R src public-site/src
+          touch public-site/.nojekyll
+          test -f public-site/index.html
+          test -f public-site/src/app.js
+          test -f public-site/src/styles.css
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public-site
+
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
