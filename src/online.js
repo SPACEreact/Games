@@ -63,7 +63,7 @@ function transmit(payload){
 }
 export function onlineMove(cell){if(Number.isInteger(cell)&&cell>=0&&cell<=8)transmit({type:"move",cell})}
 export function onlineRematch(){transmit({type:"rematch"})}
-export function reconnectOnline(){if(mode)connectOnline(mode==="create"&&snapshot?.room?"join":mode,{code:snapshot?.room||lastCode,name:lastName})}
+export function reconnectOnline(){if(mode)connectOnline(snapshot?.room?"join":mode,{code:snapshot?.room||lastCode,name:lastName})}
 export function roomLink(room){
   const url=new URL(location.href);url.search="?room="+encodeURIComponent(room);return url.toString();
 }
