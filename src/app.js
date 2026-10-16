@@ -232,6 +232,10 @@ document.addEventListener("click",event=>{
   const rpsOpt=target.getAttribute("data-rps");
   const mem=target.getAttribute("data-memory");
   const mode=target.getAttribute("data-mode");
+  const onlineAction=target.getAttribute("data-online-action");
+  const onlineCell=target.getAttribute("data-online-cell");
+  if(onlineCell!==null){onlineMove(Number(onlineCell));return}
+  if(onlineAction){beginOnlineGame(onlineAction);return}
   if(game){navigate("game",game);return}
   if(cell!==null){ticMove(Number(cell));return}
   if(rpsOpt){rpsMove(rpsOpt);return}
@@ -242,6 +246,10 @@ document.addEventListener("click",event=>{
   else if(action==="nickname"){modalOpen=true;render()}
   else if(action==="close-modal"||action==="shade"&&target===event.target){modalOpen=false;render()}
   else if(action==="share")shareGame();
+  else if(action==="online-rematch")onlineRematch();
+  else if(action==="online-reconnect")reconnectOnline();
+  else if(action==="online-leave"){leaveOnline(true);navigate("rooms")}
+
   else if(action==="ttt-reset")resetTic();
   else if(action==="rps-reset"){rps={you:null,cpu:null,wins:0,losses:0,draws:0};render()}
   else if(action==="memory-reset"){clearTimeout(memoryTimer);memory=newMemory();render()}
